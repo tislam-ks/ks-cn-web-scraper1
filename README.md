@@ -1,9 +1,12 @@
-# Web Scraper Image Library Node for ComfyUI
+# Web Scraper Image Library & Video Tools for ComfyUI
 
-A custom ComfyUI node that provides easy access to a curated library of high-resolution images scraped from sites like Pixabay, Freepik, and Unsplash.
+A custom ComfyUI node package that provides:
+- Easy access to a curated library of high-resolution images scraped from sites like Pixabay, Freepik, and Unsplash
+- **Video stitching and interpolation tools** for seamless AI video generation
 
 ## Features
 
+### Image Library
 - **Searchable Image Library**: Search images by category, keywords, tags, or machine names
 - **Category Support**: Generic categories (nature, animals, people, architecture, etc.) plus custom categories
 - **Machine Name Detection**: Automatically detects and filters images by machine/hostname
@@ -162,6 +165,72 @@ This is useful for:
 - Check disk space
 - Verify SQLite is working (usually built into Python)
 
+---
+
+## Video Stitching & Interpolation Nodes
+
+These nodes help you seamlessly stitch multiple AI-generated video clips together.
+
+### Video Stitch Interpolator
+
+The main node for stitching videos together with smooth transitions.
+
+**Inputs:**
+- `video_a` (IMAGE): First video clip (batch of frames)
+- `video_b` (IMAGE): Second video clip (batch of frames)
+- `video_c`, `video_d` (optional): Additional clips to chain
+
+**Parameters:**
+- `overlap_frames` (1-30, default 4): Frames from each clip used for blending
+- `crossfade_frames` (0-60, default 8): Duration of crossfade transition
+- `interpolation_frames` (0-16, default 2): Generated in-between frames
+- `interpolation_method`: 
+  - `linear`: Constant speed blend
+  - `ease_in_out`: Smooth acceleration/deceleration
+  - `cosine`: Natural smooth curve
+  - `sigmoid`: Sharp transition in middle
+- `blend_mode`: `crossfade`, `additive`, `overlay`
+
+**How it works:**
+1. Takes the last N frames of video_a
+2. Takes the first N frames of video_b
+3. Generates interpolated frames between them
+4. Applies crossfade blending
+5. Outputs one seamless video
+
+### Video Frame Blender
+
+Simple node to blend/mix two video frame sequences.
+
+**Parameters:**
+- `blend_factor` (0.0-1.0): 0 = all frames_a, 1 = all frames_b
+- `blend_mode`: `mix`, `add`, `multiply`, `screen`, `overlay`
+
+### Video Loop Seamless
+
+Creates a perfect loop from a video by blending end back to start.
+
+**Parameters:**
+- `blend_frames` (2-60): Frames to blend for seamless loop
+- `blend_curve`: `linear`, `ease_in_out`, `cosine`
+
+### Example Video Workflow
+
+```
+[Video Generator A] → [frames]
+                            ↘
+                             [Video Stitch Interpolator] → [seamless video]
+                            ↗
+[Video Generator B] → [frames]
+```
+
+1. Generate multiple short video clips with your AI model
+2. Connect them to Video Stitch Interpolator
+3. Adjust overlap and interpolation settings
+4. Get one seamless combined video!
+
+---
+
 ## Future Enhancements
 
 Potential features to add:
@@ -172,3 +241,5 @@ Potential features to add:
 - Integration with more scraper sources
 - Image deduplication
 - Thumbnail generation
+- **RIFE AI interpolation** for video stitching
+- **Optical flow** based frame interpolation

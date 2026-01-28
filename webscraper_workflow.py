@@ -25,15 +25,41 @@ import folder_paths
 import node_helpers
 from comfy_api.latest import ComfyExtension, io, ui
 
+# Configure logging FIRST (before any imports that might use it)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Try to import server for API routes (may not be available at import time)
 try:
     from server import PromptServer
 except ImportError:
     PromptServer = None
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Try to import video stitch nodes
+VideoStitchInterpolator = None
+VideoStitchMultiple = None
+VideoFrameBlender = None
+VideoLoopSeamless = None
+try:
+    from .video_stitch_node import (
+        VideoStitchInterpolator,
+        VideoStitchMultiple,
+        VideoFrameBlender,
+        VideoLoopSeamless
+    )
+    logger.info("Video stitch nodes imported successfully")
+except Exception as e:
+    logger.warning(f"Could not import video stitch nodes: {e}")
+    # Try direct import as fallback
+    try:
+        import video_stitch_node
+        VideoStitchInterpolator = video_stitch_node.VideoStitchInterpolator
+        VideoStitchMultiple = video_stitch_node.VideoStitchMultiple
+        VideoFrameBlender = video_stitch_node.VideoFrameBlender
+        VideoLoopSeamless = video_stitch_node.VideoLoopSeamless
+        logger.info("Video stitch nodes imported via direct import")
+    except Exception as e2:
+        logger.warning(f"Direct import also failed: {e2}")
 
 # Default library path - can be configured
 DEFAULT_LIBRARY_PATH = os.path.join(
@@ -574,6 +600,20 @@ class WebScraperExtension(ComfyExtension):
         else:
             logger.info("Adding WebScraperNode to extension")
             nodes.append(WebScraperNode)
+        
+        # Add video stitch nodes
+        video_nodes = [
+            VideoStitchInterpolator,
+            VideoStitchMultiple,
+            VideoFrameBlender,
+            VideoLoopSeamless,
+        ]
+        for vn in video_nodes:
+            if vn is not None:
+                nodes.append(vn)
+                logger.info(f"Added video node: {vn.__name__}")
+            else:
+                logger.warning(f"Video node was None, skipping")
         
         # Log node details for debugging
         node_info = []
